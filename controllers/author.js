@@ -12,3 +12,12 @@ exports.addAuthor = async (req, res, next) => {
     next(new ErrorResponse(error.message, 400))
   }
 }
+
+exports.getAllAuthors = async (req, res, next) => {
+  try {
+    const authors = await Author.find()
+    res.status(200).json(authors)
+  } catch (error) {
+    next(new ErrorResponse('Failed to retrieve authors', 500))
+  }
+}

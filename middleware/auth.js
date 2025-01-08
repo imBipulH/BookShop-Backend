@@ -1,14 +1,20 @@
+require('dotenv').config()
 const jwt = require('jsonwebtoken')
 const User = require('../models/userSchema')
+const session = require('express-session')
+const { v4: uuidv4 } = require('uuid')
 
 // Middleware to verify the token
 const protect = async (req, res, next) => {
   let token
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith('Bearer')
-  ) {
-    try {
+  try {
+    if (req.cookies.token) {
+      // Get token from cookie
+      token = req.cookies.token
+    } else if (
+      req.headers.authorization &&
+      req.headers.authorization.startsWith('Bearer')
+    ) {
       // Get token from header
       token = req.headers.authorization.split(' ')[1]
 
@@ -17,15 +23,21 @@ const protect = async (req, res, next) => {
 
       req.user = await User.findById(decoded.id).select('-password')
 
-      next()
-    } catch (error) {
-      console.error(error)
-      res.status(401).json({ message: 'Not authorized, token failed' })
+      return next()
     }
-  }
 
-  if (!token) {
-    res.status(401).json({ message: 'Not authorized, no token' })
+    if (!req.user) {
+      if (!req.session.cartId) {
+        req.session.cartId = uuidv4()
+      }
+      req.cartId = req.session.cartId
+      return next()
+    }
+
+    res.status(401).json({ message: 'Not authorized, no token or session' })
+  } catch (error) {
+    console.error(error)
+    res.status(401).json({ message: 'Not authorized, token failed' })
   }
 }
 

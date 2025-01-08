@@ -6,13 +6,13 @@ const jwt = require('jsonwebtoken')
 const userSchema = new mongoose.Schema({
   firstName: { type: String, required: true, trim: true },
   lastName: { type: String, trim: true },
-  phone: { type: String, unique: true, default: null },
+  phone: { type: String, unique: true, sparse: true },
   email: {
     type: String,
     unique: true,
     lowercase: true,
     trim: true,
-    default: null
+    sparse: true
   },
   password: { type: String, required: true },
   role: {
@@ -20,12 +20,8 @@ const userSchema = new mongoose.Schema({
     enum: ['customer', 'admin', 'moderator'],
     default: 'customer'
   },
-  cart: [
-    {
-      product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
-      quantity: { type: Number, required: true, default: 1 }
-    }
-  ],
+  cart: [{ cart: { type: mongoose.Schema.Types.ObjectId, ref: 'Cart' } }],
+
   orders: [
     {
       order: { type: mongoose.Schema.Types.ObjectId, ref: 'Order' }

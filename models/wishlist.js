@@ -11,8 +11,7 @@ const wishlistSchema = new mongoose.Schema(
     books: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Book',
-        unique: true
+        ref: 'Book'
       }
     ]
   },

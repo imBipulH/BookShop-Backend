@@ -1,47 +1,71 @@
 const Order = require('../models/order')
-const Cart = require('../models/cart') // Assuming you have a Cart model
+const Cart = require('../models/cart')
+const Address = require('../models/address')
 
 // Create a new order
 exports.createOrder = async (req, res) => {
-  const { userId, paymentMethod, shippingAddress } = req.body
-
+  const {
+    paymentMethod,
+    shippingAddressId,
+    discount = 0,
+    deliveryCharge
+  } = req.body
+  const userId = req.user._id
   try {
-    // Fetch user's cart
-    const cart = await Cart.findOne({ userId }).populate('items.productId')
-
-    if (!cart || cart.items.length === 0) {
-      return res.status(400).json({ error: 'Cart is empty' })
-    }
-
-    // Calculate total price
-    const totalPrice = cart.items.reduce(
-      (sum, item) => sum + item.quantity * item.price,
-      0
+    let cart = await Cart.findOne({ userId: req.user._id }).populate(
+      'items.productId',
+      'title price'
     )
 
-    // Prepare order items
-    const orderItems = cart.items.map(item => ({
+    if (!cart || !cart.items.some(item => item.isMarked)) {
+      return res.status(400).json({ message: 'No items marked for ordering.' })
+    }
+    const markedItems = cart.items.filter(item => item.isMarked)
+    const orderItems = markedItems.map(item => ({
       productId: item.productId._id,
+      title: item.productId.title,
       quantity: item.quantity,
-      price: item.price
+      price: item.productId.price
     }))
+    const totalAmount = markedItems.reduce((total, item) => {
+      return total + item.quantity * item.productId.price
+    }, 0)
 
-    // Create new order
+    const discountPrice = Math.max(totalAmount - discount, 0)
+    const vat = (discountPrice * 5) / 100
+    const charge = deliveryCharge || 60
+    const totalPrice = discountPrice + vat + charge
+
+    // Check if the shipping address exists and belongs to the user
+    const shippingAddress = await Address.findOne({
+      _id: shippingAddressId
+    })
+    if (!shippingAddress) {
+      return res.status(404).json({
+        error: 'Shipping address not found or does not belong to the user'
+      })
+    }
+
     const newOrder = new Order({
       userId,
       items: orderItems,
+      discount,
+      vat,
+      shippingCharge: charge,
       totalPrice,
       paymentMethod,
-      shippingAddress
+      shippingAddress: shippingAddressId
     })
 
     await newOrder.save()
 
-    // Clear the user's cart after placing order
-    await Cart.deleteOne({ userId })
+    // Remove marked items from the cart
+    cart.items = cart.items.filter(item => !item.isMarked)
+    await cart.save()
 
     res.status(201).json(newOrder)
   } catch (error) {
+    console.error('Error creating order:', error)
     res.status(500).json({ error: 'Error creating order' })
   }
 }
@@ -66,13 +90,19 @@ exports.getOrderById = async (req, res) => {
   const orderId = req.params.orderId
 
   try {
-    const order = await Order.findById(orderId).populate(
-      'items.productId',
-      'title author price'
-    )
+    const order = await Order.findById(orderId)
+      .populate('items.productId', 'title author price')
+      .populate('shippingAddress')
 
     if (!order) {
       return res.status(404).json({ error: 'Order not found' })
+    }
+
+    if (
+      order.userId.toString() !== req.user._id.toString() &&
+      req.user.role !== 'admin'
+    ) {
+      return res.status(403).json({ error: 'Access denied' })
     }
 
     res.status(200).json(order)

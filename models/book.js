@@ -32,6 +32,10 @@ const reviewSchema = new mongoose.Schema(
 
 const bookSchema = new mongoose.Schema(
   {
+    itemId: {
+      type: String
+      // unique: true
+    },
     title: {
       type: String,
       required: true,
@@ -50,7 +54,7 @@ const bookSchema = new mongoose.Schema(
     category: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Category', // Reference to the Category schema
+        ref: 'Category',
         required: true
       }
     ],
@@ -62,6 +66,12 @@ const bookSchema = new mongoose.Schema(
     price: {
       type: Number,
       required: true
+    },
+    discountPercentage: {
+      type: Number
+    },
+    discountPrice: {
+      type: Number
     },
     language: {
       type: String,
@@ -76,7 +86,7 @@ const bookSchema = new mongoose.Schema(
     pdf: {
       type: String
     },
-    description: {
+    summery: {
       type: String
     },
     coverImage: {

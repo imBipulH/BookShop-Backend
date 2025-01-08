@@ -2,9 +2,8 @@
 const Wishlist = require('../models/wishlist')
 
 exports.addToWishlist = async (req, res) => {
-  const { userId } = req.user // Assuming req.user has authenticated user data
+  const userId = req.user._id // Assuming req.user has authenticated user data
   const { bookId } = req.body
-
   try {
     let wishlist = await Wishlist.findOne({ userId })
 
@@ -27,7 +26,7 @@ exports.addToWishlist = async (req, res) => {
 
 // Remove from wishlist
 exports.removeFromWishlist = async (req, res) => {
-  const { userId } = req.user
+  const userId = req.user._id
   const { bookId } = req.body
 
   try {
@@ -35,10 +34,13 @@ exports.removeFromWishlist = async (req, res) => {
       { userId },
       { $pull: { books: bookId } },
       { new: true }
-    )
+    ).populate('books')
 
     if (!wishlist)
       return res.status(404).json({ message: 'Wishlist not found' })
+
+    console.log(wishlist)
+
     res.status(200).json(wishlist)
   } catch (error) {
     res
@@ -49,15 +51,16 @@ exports.removeFromWishlist = async (req, res) => {
 
 // Get wishlist by user ID
 exports.getWishlist = async (req, res) => {
-  const { userId } = req.user
+  if (!req.user) return res.status(404).json({ message: 'Log in first' })
+  const userId = req.user._id
 
   try {
-    const wishlist = await Wishlist.findOne({ userId }).populate(
-      'books',
-      'title author price'
-    )
+    const wishlist = await Wishlist.findOne({ userId }).populate('books')
     if (!wishlist)
       return res.status(404).json({ message: 'Wishlist not found' })
+
+    console.log(wishlist)
+
     res.status(200).json(wishlist)
   } catch (error) {
     res

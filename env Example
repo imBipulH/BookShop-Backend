@@ -1,0 +1,27 @@
+PORT=
+MONGO_URI=
+
+# Live Credentials
+TWILIO_SID=""
+TWILIO_AUTH_TOKEN=""
+TWILIO_PHONE_NUMBER="+"
+
+# Test credential below
+# TWILIO_SID=""
+# TWILIO_AUTH_TOKEN=""
+# TWILIO_PHONE_NUMBER="+"
+TWILIO_VERIFY_SID=""
+
+
+
+#   "status": "approved",
+#   "payee": null,
+#   "date_updated": "2024-10-23T12:00:24Z",
+#   "account_sid": "",
+#   "to": "+",
+#   "amount": null,
+#   "valid": true,
+#   "sid": "",
+#   "date_created": "2024-10-23T12:00:09Z",
+#   "service_sid": "",
+#   "channel": "sms"

@@ -11,9 +11,11 @@ const CartSchema = new mongoose.Schema({
         required: true
       },
       quantity: { type: Number, min: 1, default: 1 },
-      price: Number
+      price: Number,
+      isMarked: { type: Boolean, default: true }
     }
-  ]
+  ],
+  selectAll: { type: Boolean, default: false }
 })
 
 module.exports = mongoose.model('Cart', CartSchema)
